@@ -1,0 +1,9 @@
+__pycache__/
+.env
+venv/
+node_modules/
+dist/
+.pytest_cache/
+ml_artifacts/
+*.pyc
+.ruff_cache/
