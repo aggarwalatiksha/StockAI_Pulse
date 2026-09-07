@@ -28,13 +28,13 @@ if not exist "backend\.env" (
 )
 
 echo Starting Backend...
-start "AlgoScan Backend" cmd /c "cd backend && uvicorn app.main:app --reload --port 8000"
+start "AlgoScan Backend" cmd /c "cd backend && C:\Users\DELL\AppData\Local\Programs\Python\Python311\python.exe -m uvicorn app.main:app --reload --port 8000"
 
 echo Starting Frontend...
 start "AlgoScan Frontend" cmd /c "cd frontend && npm run dev"
 
 echo Waiting for services to initialize...
-timeout /t 3 /nobreak >nul
+timeout /t 8 /nobreak >nul
 
 echo Opening browser...
 start http://localhost:5173

@@ -34,10 +34,17 @@ router = APIRouter()
 
 
 def _get_finbert(request: Request) -> FinBERTAnalyzer:
-    """Extract FinBERT analyzer from app state."""
+    """Extract FinBERT analyzer from app state; lazy-load model on first use."""
     analyzer: FinBERTAnalyzer | None = getattr(request.app.state, "finbert", None)
-    if analyzer is None or not analyzer.is_loaded:
-        raise HTTPException(status_code=503, detail="FinBERT model not loaded.")
+    if analyzer is None:
+        raise HTTPException(status_code=503, detail="FinBERT analyzer not initialized.")
+    if not analyzer.is_loaded:
+        logger.info("Lazy-loading FinBERT model on first sentiment request...")
+        try:
+            analyzer.load_model()
+        except Exception as exc:
+            logger.error("Failed to load FinBERT model: %s", exc)
+            raise HTTPException(status_code=503, detail=f"FinBERT model loading failed: {exc}")
     return analyzer
 
 

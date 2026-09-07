@@ -62,17 +62,23 @@ const Navbar = ({ selectedTicker, setSelectedTicker, selectedTimeframe, setSelec
 
       <div className="flex items-center space-x-6">
         <div className="flex items-center space-x-1 bg-slate-800 rounded-lg p-1 border border-slate-700">
-          {['1D', '1W', '1M', '6M', '1Y'].map((tf) => (
+          {['1D', '1W', '1M', '6M', '1Y', 'LIVE'].map((tf) => (
             <button
               key={tf}
               onClick={() => setSelectedTimeframe(tf)}
-              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors flex items-center space-x-1 ${
                 selectedTimeframe === tf
-                  ? 'bg-slate-700 text-white shadow-sm'
+                  ? tf === 'LIVE' 
+                    ? 'bg-emerald-500/20 text-emerald-400 shadow-sm border border-emerald-500/50'
+                    : 'bg-slate-700 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {tf}
+              {tf === 'LIVE' && <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>}
+              <span>{tf}</span>
             </button>
           ))}
         </div>

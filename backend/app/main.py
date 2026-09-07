@@ -26,11 +26,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     setup_logging(level=logging.DEBUG if settings.debug else logging.INFO)
     logger.info("Starting %s...", settings.app_name)
 
-    # Load FinBERT model into memory
+    # Lazy-load FinBERT: create analyzer but don't download model at startup
     analyzer = FinBERTAnalyzer(settings=settings)
-    analyzer.load_model()
     app.state.finbert = analyzer
-    logger.info("FinBERT model loaded successfully.")
+    app.state.finbert_loaded = False
+    logger.info("FinBERT analyzer initialized (model will load on first use).")
 
     yield
 
