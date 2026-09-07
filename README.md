@@ -65,13 +65,47 @@ StockAI_Pulse/
 │   └── package.json                 # Frontend dependencies
 ├── docker-compose.yml               # Orchestrates Backend + Frontend + Redis
 ├── Makefile                         # Developer commands
+├── run.py                           # Cross-platform single-command runner (Python)
+├── start.bat                        # Windows 1-click launcher
+├── start.sh                         # Linux/macOS 1-command launcher
+├── package.json                     # Root NPM shortcuts
 ├── .gitignore
 └── README.md
 ```
 
 ---
 
-## 🐳 Running with Docker Compose (Recommended)
+## ⚡ Single-Command Quick Start (Run Everything at Once)
+
+You can launch both the **FastAPI Backend** and the **React Frontend** with a single command using any of the following:
+
+### Option 1: Universal Python Runner (Windows / macOS / Linux)
+```bash
+python run.py
+```
+*Automatically checks dependencies, sets up `.env`, runs both servers concurrently with color-coded logs, and opens `http://localhost:5173` in your browser.*
+
+### Option 2: Windows 1-Click Launcher
+Double-click `start.bat` or run in terminal:
+```cmd
+start.bat
+```
+
+### Option 3: macOS / Linux Shell Launcher
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+### Option 4: NPM Root Shortcut
+```bash
+npm start
+```
+
+---
+
+## 🐳 Running with Docker Compose (Containerized)
+
 
 To build and run the entire platform (Backend + Frontend + Redis) with a single command:
 
