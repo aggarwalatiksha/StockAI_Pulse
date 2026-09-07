@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, Search, Github, Clock, Globe } from 'lucide-react';
+import { Activity, Search, Clock, Globe } from 'lucide-react';
 
 const Navbar = ({ selectedTicker, setSelectedTicker, selectedTimeframe, setSelectedTimeframe }) => {
   const [searchInput, setSearchInput] = useState('');
@@ -83,9 +83,6 @@ const Navbar = ({ selectedTicker, setSelectedTicker, selectedTimeframe, setSelec
           ))}
         </div>
         <Clock className="h-5 w-5 text-slate-400" />
-        <a href="https://github.com" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors">
-          <Github className="h-5 w-5" />
-        </a>
       </div>
     </nav>
   );
