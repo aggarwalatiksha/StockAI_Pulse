@@ -58,7 +58,7 @@ def _compound_to_signal(score: float) -> str:
 
 
 @router.get(
-    "/analyze/{ticker}",
+    "/analyze/{ticker:path}",
     response_model=TickerSentimentResponse,
     summary="Analyze sentiment for a ticker",
 )

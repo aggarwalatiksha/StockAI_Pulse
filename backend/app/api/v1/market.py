@@ -44,7 +44,7 @@ def _safe_float(val: object) -> float | None:
 
 
 @router.get(
-    "/data/{ticker}",
+    "/data/{ticker:path}",
     response_model=MarketDataResponse,
     summary="Fetch OHLCV market data",
 )
@@ -117,7 +117,7 @@ async def get_market_data(
 
 
 @router.get(
-    "/indicators/{ticker}",
+    "/indicators/{ticker:path}",
     response_model=IndicatorsResponse,
     summary="Fetch technical indicators",
 )

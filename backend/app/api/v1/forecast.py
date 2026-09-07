@@ -139,16 +139,16 @@ async def train_model(
 
 
 @router.get(
-    "/predict/{ticker}",
+    "/predict/{ticker:path}",
     response_model=ForecastResponse,
     summary="Generate forecast predictions",
 )
 async def predict(
-    ticker: Annotated[str, FastAPIPath(min_length=1, max_length=10, description="Ticker symbol")],
+    ticker: Annotated[str, FastAPIPath(min_length=1, max_length=20, description="Ticker symbol")],
     days: Annotated[int, Query(ge=1, le=30, description="Number of days to forecast")] = 5,
     settings: Settings = Depends(get_settings),
 ) -> ForecastResponse:
-    """Generate forecast predictions using a trained model."""
+    """Generate forecast predictions using a trained model (auto-trains if needed)."""
     ticker = ticker.upper()
 
     # 1. Load model from registry
@@ -156,10 +156,19 @@ async def predict(
     model_version = registry.get_latest("xgboost", ticker)
 
     if model_version is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No trained model found for {ticker}. Train one first via POST /train.",
-        )
+        logger.info("No trained model found for %s; auto-training XGBoost on the fly...", ticker)
+        try:
+            await train_model(
+                TrainRequest(ticker=ticker, period="2y", task="classification"),
+                settings=settings,
+            )
+            model_version = registry.get_latest("xgboost", ticker)
+        except Exception as exc:
+            logger.warning("Auto-training failed for %s: %s", ticker, exc)
+            raise HTTPException(
+                status_code=404,
+                detail=f"Could not generate forecast for {ticker}: {exc}",
+            )
 
     model = XGBoostForecaster(task=model_version.task)
     model.load(Path(model_version.file_path))
