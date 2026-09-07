@@ -24,7 +24,7 @@ def setup_logging(level: int = logging.INFO) -> None:
         root_logger.addHandler(handler)
 
     # Silence noisy third-party loggers
-    for noisy in ("httpx", "httpcore", "urllib3", "transformers"):
+    for noisy in ("httpx", "httpcore", "urllib3", "transformers", "ccxt", "yfinance", "filelock"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
