@@ -1,0 +1,82 @@
+import React, { useState } from 'react';
+import Navbar from './components/layout/Navbar';
+import Sidebar from './components/layout/Sidebar';
+import PriceChart from './components/charts/PriceChart';
+import SentimentGauge from './components/sentiment/SentimentGauge';
+import NewsFeed from './components/sentiment/NewsFeed';
+import RiskScorecard from './components/risk/RiskScorecard';
+import ForecastCard from './components/forecast/ForecastCard';
+import StrategyControls from './components/backtest/StrategyControls';
+import BacktestVisualizer from './components/backtest/BacktestVisualizer';
+
+const App = () => {
+  const [selectedTicker, setSelectedTicker] = useState('AAPL');
+  const [selectedTimeframe, setSelectedTimeframe] = useState('1Y');
+  const [activeTab, setActiveTab] = useState('terminal');
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'terminal':
+        return (
+          <div className="flex-1 p-6 h-full">
+            <PriceChart ticker={selectedTicker} timeframe={selectedTimeframe} />
+          </div>
+        );
+      case 'sentiment':
+        return (
+          <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+            <div className="lg:col-span-1 h-full">
+              <SentimentGauge score={0.65} />
+            </div>
+            <div className="lg:col-span-2 h-full">
+              <NewsFeed />
+            </div>
+          </div>
+        );
+      case 'forecast':
+        return (
+          <div className="flex-1 p-6 max-w-4xl mx-auto w-full h-full">
+            <ForecastCard />
+          </div>
+        );
+      case 'backtest':
+        return (
+          <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+            <div className="lg:col-span-1 h-full">
+              <StrategyControls />
+            </div>
+            <div className="lg:col-span-3 h-full">
+              <BacktestVisualizer />
+            </div>
+          </div>
+        );
+      case 'risk':
+        return (
+          <div className="flex-1 p-6 h-full">
+            <RiskScorecard />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-screen w-screen bg-[#020617] text-slate-300 font-sans overflow-hidden">
+      <Navbar 
+        selectedTicker={selectedTicker} 
+        setSelectedTicker={setSelectedTicker}
+        selectedTimeframe={selectedTimeframe}
+        setSelectedTimeframe={setSelectedTimeframe}
+      />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <main className="flex-1 relative overflow-auto bg-gradient-to-br from-[#020617] to-slate-900">
+          {renderContent()}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default App;
