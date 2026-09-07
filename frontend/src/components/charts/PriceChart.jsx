@@ -36,7 +36,7 @@ const getTimeframeParams = (timeframe) => {
     case '1M':   return { period: '3mo', interval: '1d' };
     case '6M':   return { period: '6mo', interval: '1d' };
     case '1Y':   return { period: '1y',  interval: '1d' };
-    case 'LIVE': return { period: '1d',  interval: '5m' };
+    case 'LIVE': return { period: '1d',  interval: '1m' };
     default:     return { period: '1y',  interval: '1d' };
   }
 };
@@ -154,7 +154,7 @@ const PriceChart = ({ ticker, timeframe }) => {
       setIsLive(true);
       liveInterval = setInterval(() => {
         if (isMounted) loadChartData();
-      }, 30000);
+      }, 5000);
     } else {
       setIsLive(false);
     }
@@ -197,7 +197,7 @@ const PriceChart = ({ ticker, timeframe }) => {
           {isLive && (
             <span className="flex items-center space-x-1 text-xs text-emerald-400">
               <Wifi className="w-3 h-3" />
-              <span>5m candles • auto-refresh 30s</span>
+              <span>1m candles • auto-refresh 5s</span>
             </span>
           )}
         </div>
