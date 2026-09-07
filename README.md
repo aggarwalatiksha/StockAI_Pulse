@@ -1,4 +1,4 @@
-﻿# StockAI Pulse (AlgoScan) 📈🤖
+# StockAI Pulse (AlgoScan) 📈🤖
 
 An end-to-end predictive algorithmic trading and financial sentiment analysis platform combining real-time NLP financial sentiment extraction with time-series algorithmic backtesting and risk metrics.
 
@@ -11,6 +11,8 @@ An end-to-end predictive algorithmic trading and financial sentiment analysis pl
 - **Market Data & Technicals**: Yahoo Finance (`yfinance`) for equities/ETFs, `CCXT` (Binance) for cryptocurrencies, and 10+ vectorized indicators (SMA, EMA, WMA, RSI, MACD, Bollinger Bands, ATR, VWAP, Stochastic)
 - **ML Forecasting Engine**: Feature matrix builder with strict lag shifts (`shift(1)`) to avoid lookahead bias, XGBoost classifier/regressor with time-series CV, Bidirectional LSTM with Attention (PyTorch), and weighted Ensemble predictor
 - **Quantitative Risk & Backtest Engine**: Simulation engine with realistic slippage, commissions, benchmark comparison, and metrics: **Cumulative ROI**, **Annualized ROI**, **Sharpe Ratio**, **Sortino Ratio**, **Max Drawdown (MDD)**, **Calmar Ratio**, **Win Rate**, and **Profit Factor**
+- **Frontend & UI Dashboard**: React 18, Tailwind CSS, TradingView Lightweight Charts, Lucide icons, Vite
+- **DevOps & Deployment**: Multi-stage Dockerfiles, Nginx reverse proxy, Docker Compose, Redis
 
 ---
 
@@ -40,58 +42,93 @@ StockAI_Pulse/
 │   │   ├── models/                  # Pydantic DTOs for requests & responses
 │   │   └── utils/                   # Structured logging, custom errors, LRU cache
 │   ├── tests/                       # Pytest unit & integration test suites
+│   ├── Dockerfile                   # Multi-stage Python backend container
 │   ├── pyproject.toml               # Project metadata & dependency specs
 │   ├── requirements.txt             # Pip dependencies
 │   └── .env.example                 # Example configuration
+├── frontend/
+│   ├── src/
+│   │   ├── api/client.js            # Unified API client with fallbacks
+│   │   ├── components/
+│   │   │   ├── charts/PriceChart.jsx # TradingView Lightweight Chart
+│   │   │   ├── sentiment/           # SentimentGauge, NewsFeed
+│   │   │   ├── backtest/            # StrategyControls, BacktestVisualizer
+│   │   │   ├── risk/                # RiskScorecard
+│   │   │   ├── forecast/            # ForecastCard
+│   │   │   └── layout/              # Navbar, Sidebar
+│   │   ├── App.jsx                  # Main dashboard state & layout
+│   │   └── index.css                # Tailwind directives & typography
+│   ├── nginx.conf                   # Nginx reverse proxy configuration
+│   ├── Dockerfile                   # Multi-stage frontend container
+│   ├── vite.config.js               # Vite bundler config
+│   ├── tailwind.config.js           # Institutional dark theme palette
+│   └── package.json                 # Frontend dependencies
+├── docker-compose.yml               # Orchestrates Backend + Frontend + Redis
+├── Makefile                         # Developer commands
 ├── .gitignore
 └── README.md
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🐳 Running with Docker Compose (Recommended)
 
-### 1. Clone & Set Up Virtual Environment
+To build and run the entire platform (Backend + Frontend + Redis) with a single command:
 
 ```bash
 git clone https://github.com/aggarwalatiksha/StockAI_Pulse.git
-cd StockAI_Pulse/backend
+cd StockAI_Pulse
 
+# Start all services
+docker compose up --build -d
+```
+
+- **Frontend Dashboard**: [http://localhost:80](http://localhost:80) or [http://localhost:5173](http://localhost:5173)
+- **FastAPI Backend & Swagger**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Redis**: Port `6379`
+
+To stop:
+```bash
+docker compose down
+```
+
+---
+
+## 🚀 Local Development Setup
+
+### 1. Backend (FastAPI)
+
+```bash
+cd backend
 python -m venv venv
 # On Windows:
 venv\Scripts\activate
 # On macOS/Linux:
 source venv/bin/activate
-```
 
-### 2. Install Dependencies
-
-```bash
 pip install -r requirements.txt
-```
-
-### 3. Environment Configuration
-
-Copy `.env.example` to `.env` and provide your optional API keys:
-
-```bash
 copy .env.example .env
-```
 
-```ini
-NEWSAPI_KEY=your_key_here
-ALPHA_VANTAGE_KEY=your_key_here
-FINBERT_MODEL_NAME=ProsusAI/finbert
-```
-
-### 4. Run the API Server
-
-```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+### 2. Frontend (React + Vite)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend will run at [http://localhost:5173](http://localhost:5173) with automatic hot-reloading and proxying to the backend.
+
+---
+
+## 📡 Key API Endpoints
+
 Access the interactive API docs at:
 - **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+
 - **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
 ---
