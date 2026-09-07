@@ -164,16 +164,12 @@ async def predict(
     model = XGBoostForecaster(task=model_version.task)
     model.load(Path(model_version.file_path))
 
-    # 2. Fetch recent market data
+    # 2. Fetch recent market data (use 2y to ensure 200-day SMA has enough bars)
     fetcher = MarketDataFetcher()
-    market_data = await fetcher.fetch(ticker, period="6mo", interval="1d")
+    market_data = await fetcher.fetch(ticker, period="2y", interval="1d")
 
-    # 3. Build features (no target needed for prediction)
-    from app.core.market.indicators import add_all_indicators
-    df = add_all_indicators(market_data.df)
-
-    feature_cols = [c for c in df.columns if c not in ["open", "high", "low", "close", "volume", "adj_close"]]
-    features = df[feature_cols].dropna()
+    # 3. Build features using build_feature_matrix to match training features exactly
+    features, _ = build_feature_matrix(market_data.df)
 
     if features.empty:
         raise HTTPException(status_code=422, detail="Insufficient data to generate features.")

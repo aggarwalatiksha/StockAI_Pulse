@@ -37,7 +37,7 @@ const App = () => {
       case 'forecast':
         return (
           <div className="flex-1 p-6 max-w-4xl mx-auto w-full h-full">
-            <ForecastCard />
+            <ForecastCard ticker={selectedTicker} />
           </div>
         );
       case 'backtest':

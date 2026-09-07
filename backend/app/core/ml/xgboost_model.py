@@ -236,6 +236,7 @@ class XGBoostForecaster:
     def load(self, path: Path) -> None:
         """Load model from disk."""
         self._model.load_model(str(path))
+        self._feature_names = self._model.get_booster().feature_names or []
         self._trained_at = datetime.now(tz=timezone.utc)
         logger.info("XGBoost model loaded from %s.", path)
 
