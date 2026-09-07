@@ -1,19 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../../api/client';
 
-const SentimentGauge = ({ score = 0.65 }) => {
-  // score ranges from -1 to 1
+const SentimentGauge = ({ ticker = 'AAPL', score: initialScore = null }) => {
+  const [currentScore, setCurrentScore] = useState(initialScore !== null ? initialScore : 0.42);
+  const [signal, setSignal] = useState('Bullish');
+  const [probs, setProbs] = useState({ pos: 68.5, neu: 20.0, neg: 11.5 });
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadSentiment() {
+      try {
+        const res = await api.fetchSentiment(ticker, 7);
+        if (res && res.data && isMounted) {
+          const s = Number(res.data.current_score || 0);
+          setCurrentScore(s);
+          setSignal(res.data.signal || (s >= 0.15 ? 'Bullish' : s <= -0.15 ? 'Bearish' : 'Neutral'));
+          
+          if (res.data.headline_scores && res.data.headline_scores.length > 0) {
+            const avgPos = res.data.headline_scores.reduce((acc, h) => acc + h.positive, 0) / res.data.headline_scores.length;
+            const avgNeu = res.data.headline_scores.reduce((acc, h) => acc + h.neutral, 0) / res.data.headline_scores.length;
+            const avgNeg = res.data.headline_scores.reduce((acc, h) => acc + h.negative, 0) / res.data.headline_scores.length;
+            setProbs({
+              pos: Math.round(avgPos * 1000) / 10,
+              neu: Math.round(avgNeu * 1000) / 10,
+              neg: Math.round(avgNeg * 1000) / 10,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch sentiment score:", err);
+      }
+    }
+    if (initialScore === null) {
+      loadSentiment();
+    }
+    return () => { isMounted = false; };
+  }, [ticker, initialScore]);
+
+  const score = currentScore;
   const normalizedScore = (score + 1) / 2; // 0 to 1
   const rotation = normalizedScore * 180 - 90; // -90 to 90 degrees
 
-  let sentimentStatus = 'Neutral';
+  let sentimentStatus = signal;
   let colorClass = 'text-slate-400';
   let bgClass = 'bg-slate-500';
   
-  if (score >= 0.2) {
+  if (sentimentStatus === 'Bullish' || score >= 0.15) {
     sentimentStatus = 'Bullish';
     colorClass = 'text-emerald-400';
     bgClass = 'bg-emerald-500';
-  } else if (score <= -0.2) {
+  } else if (sentimentStatus === 'Bearish' || score <= -0.15) {
     sentimentStatus = 'Bearish';
     colorClass = 'text-red-400';
     bgClass = 'bg-red-500';
@@ -21,7 +57,8 @@ const SentimentGauge = ({ score = 0.65 }) => {
 
   return (
     <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 flex flex-col items-center justify-center shadow-xl">
-      <h3 className="text-slate-400 text-sm font-medium mb-6 uppercase tracking-wider">FinBERT Compound Score</h3>
+      <h3 className="text-slate-400 text-sm font-medium mb-6 uppercase tracking-wider">FinBERT Compound — {ticker}</h3>
+
       
       <div className="relative w-48 h-24 overflow-hidden mb-6">
         {/* Gauge Background */}

@@ -26,11 +26,12 @@ const App = () => {
         return (
           <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
             <div className="lg:col-span-1 h-full">
-              <SentimentGauge score={0.65} />
+              <SentimentGauge ticker={selectedTicker} />
             </div>
             <div className="lg:col-span-2 h-full">
-              <NewsFeed />
+              <NewsFeed ticker={selectedTicker} />
             </div>
+
           </div>
         );
       case 'forecast':

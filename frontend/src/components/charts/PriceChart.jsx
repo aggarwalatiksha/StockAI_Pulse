@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createChart } from 'lightweight-charts';
 import { Maximize2, Settings, BarChart2 } from 'lucide-react';
+import { api } from '../../api/client';
+
 
 const generateDummyData = () => {
   let basePrice = 150;
@@ -70,22 +72,57 @@ const PriceChart = ({ ticker, timeframe }) => {
       scaleMargins: { top: 0.8, bottom: 0 },
     });
 
-    const { data, volumeData } = generateDummyData();
-    candlestickSeries.setData(data);
-    volumeSeries.setData(volumeData);
+    let isMounted = true;
+    async function loadChartData() {
+      try {
+        const res = await api.fetchMarketData(ticker, timeframe === '1D' ? '1mo' : timeframe === '1W' ? '3mo' : timeframe === '1M' ? '6mo' : '1y', '1d');
+        if (res && res.data && res.data.ohlcv && res.data.ohlcv.length > 0 && isMounted) {
+          const candleData = res.data.ohlcv.map(b => ({
+            time: b.timestamp.split('T')[0],
+            open: Number(b.open),
+            high: Number(b.high),
+            low: Number(b.low),
+            close: Number(b.close)
+          }));
+          const volData = res.data.ohlcv.map(b => ({
+            time: b.timestamp.split('T')[0],
+            value: Number(b.volume),
+            color: b.close >= b.open ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'
+          }));
+          candlestickSeries.setData(candleData);
+          volumeSeries.setData(volData);
+          chart.timeScale().fitContent();
+          return;
+        }
+      } catch (e) {
+        console.warn('API fetchMarketData failed, falling back to simulated data:', e);
+      }
+
+      if (isMounted) {
+        const { data, volumeData } = generateDummyData();
+        candlestickSeries.setData(data);
+        volumeSeries.setData(volumeData);
+        chart.timeScale().fitContent();
+      }
+    }
+
+    loadChartData();
 
     const handleResize = () => {
-      chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+      if (chartContainerRef.current) {
+        chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+      }
     };
 
     window.addEventListener('resize', handleResize);
-    chart.timeScale().fitContent();
 
     return () => {
+      isMounted = false;
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
   }, [ticker, timeframe]);
+
 
   return (
     <div className="h-full w-full flex flex-col bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl">
