@@ -33,10 +33,10 @@ start "AlgoScan Backend" cmd /c "cd backend && C:\Users\DELL\AppData\Local\Progr
 
 echo [2/3] Waiting for backend to be ready...
 :wait_loop
-timeout /t 2 /nobreak >nul
-powershell -Command "try { $r = Invoke-WebRequest -Uri 'http://localhost:8000/health' -UseBasicParsing -TimeoutSec 3; if ($r.StatusCode -eq 200) { exit 0 } else { exit 1 } } catch { exit 1 }" >nul 2>&1
+timeout /t 1 /nobreak >nul
+curl.exe -s -o nul -w "%%{http_code}" http://localhost:8000/health | findstr "200" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo        Still waiting for backend...
+    echo        Waiting for backend...
     goto :wait_loop
 )
 echo        Backend is ready!

@@ -9,15 +9,14 @@ from __future__ import annotations
 import hashlib
 from typing import TYPE_CHECKING
 
-import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
+if TYPE_CHECKING:
+    import torch
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+    from app.config import Settings
 
 from app.utils.cache import LRUCache
 from app.utils.errors import ModelNotLoadedError
 from app.utils.logging import get_logger
-
-if TYPE_CHECKING:
-    from app.config import Settings
 
 logger = get_logger(__name__)
 
@@ -73,10 +72,10 @@ class FinBERTAnalyzer:
         self._model_name = settings.finbert_model_name
         self._batch_size = settings.finbert_batch_size
         self._max_length = settings.finbert_max_length
-        self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._device = None
 
-        self._tokenizer: AutoTokenizer | None = None
-        self._model: AutoModelForSequenceClassification | None = None
+        self._tokenizer = None
+        self._model = None
         self._cache: LRUCache[SentimentScore] = LRUCache(max_size=settings.finbert_cache_size)
         self._loaded = False
 
@@ -84,6 +83,12 @@ class FinBERTAnalyzer:
 
     def load_model(self) -> None:
         """Download (if needed) and load the FinBERT model and tokenizer."""
+        import torch
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+        if self._device is None:
+            self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         logger.info("Loading FinBERT model '%s' onto %s...", self._model_name, self._device)
         self._tokenizer = AutoTokenizer.from_pretrained(self._model_name)
         self._model = AutoModelForSequenceClassification.from_pretrained(self._model_name)
@@ -147,6 +152,7 @@ class FinBERTAnalyzer:
 
     def _batched_inference(self, texts: list[str]) -> list[SentimentScore]:
         """Run inference in mini-batches for memory efficiency."""
+        import torch
         all_scores: list[SentimentScore] = []
 
         for batch_start in range(0, len(texts), self._batch_size):
