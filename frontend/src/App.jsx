@@ -79,7 +79,7 @@ const App = () => {
       case 'risk':
         return (
           <div className="flex-1 p-6 h-full">
-            <RiskScorecard />
+            <RiskScorecard ticker={selectedTicker} />
           </div>
         );
       default:
