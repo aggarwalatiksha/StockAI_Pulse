@@ -8,11 +8,29 @@ import RiskScorecard from './components/risk/RiskScorecard';
 import ForecastCard from './components/forecast/ForecastCard';
 import StrategyControls from './components/backtest/StrategyControls';
 import BacktestVisualizer from './components/backtest/BacktestVisualizer';
+import { api } from './api/client';
 
 const App = () => {
   const [selectedTicker, setSelectedTicker] = useState('AAPL');
   const [selectedTimeframe, setSelectedTimeframe] = useState('1Y');
   const [activeTab, setActiveTab] = useState('terminal');
+
+  const [backtestResult, setBacktestResult] = useState(null);
+  const [backtestLoading, setBacktestLoading] = useState(false);
+
+  const handleRunBacktest = async (payload) => {
+    setBacktestLoading(true);
+    try {
+      const res = await api.runBacktest(payload);
+      if (res && res.data) {
+        setBacktestResult(res.data);
+      }
+    } catch (e) {
+      console.warn('Backtest failed:', e);
+    } finally {
+      setBacktestLoading(false);
+    }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -44,10 +62,17 @@ const App = () => {
         return (
           <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
             <div className="lg:col-span-1 h-full">
-              <StrategyControls />
+              <StrategyControls
+                ticker={selectedTicker}
+                onRunBacktest={handleRunBacktest}
+                loading={backtestLoading}
+              />
             </div>
             <div className="lg:col-span-3 h-full">
-              <BacktestVisualizer />
+              <BacktestVisualizer
+                data={backtestResult}
+                loading={backtestLoading}
+              />
             </div>
           </div>
         );

@@ -1,66 +1,184 @@
-import React from 'react';
-import { Play, Settings2, SlidersHorizontal } from 'lucide-react';
+import React, { useState } from 'react';
+import { Play, Settings2, SlidersHorizontal, Loader2 } from 'lucide-react';
 
-const InputGroup = ({ label, defaultValue, type = "number" }) => (
-  <div className="flex flex-col mb-3">
-    <label className="text-xs text-slate-400 mb-1">{label}</label>
-    <input 
-      type={type} 
-      defaultValue={defaultValue} 
-      className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
-    />
-  </div>
-);
+const StrategyControls = ({ ticker = 'AAPL', onRunBacktest, loading }) => {
+  const [strategy, setStrategy] = useState('MACD_CROSSOVER');
+  const [fastPeriod, setFastPeriod] = useState(12);
+  const [slowPeriod, setSlowPeriod] = useState(26);
+  const [signalSmoothing, setSignalSmoothing] = useState(9);
+  const [sentThreshold, setSentThreshold] = useState(0.25);
+  const [initialCapital, setInitialCapital] = useState(10000);
+  const [commission, setCommission] = useState(0.1);
+  const [slippage, setSlippage] = useState(0.05);
 
-const StrategyControls = () => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (loading) return;
+
+    const params = {};
+    if (strategy === 'MACD_CROSSOVER') {
+      params.fast = Number(fastPeriod);
+      params.slow = Number(slowPeriod);
+      params.signal = Number(signalSmoothing);
+    } else if (strategy === 'SMA_CROSSOVER') {
+      params.fast_period = Number(fastPeriod);
+      params.slow_period = Number(slowPeriod);
+    } else if (strategy === 'SENTIMENT_ENHANCED') {
+      params.fast_period = Number(fastPeriod);
+      params.slow_period = Number(slowPeriod);
+      params.sentiment_threshold = Number(sentThreshold);
+    } else if (strategy === 'RSI_MOMENTUM') {
+      params.period = Number(fastPeriod);
+      params.oversold = 30;
+      params.overbought = 70;
+    } else if (strategy === 'BOLLINGER_BREAKOUT') {
+      params.period = Number(fastPeriod);
+      params.std_dev = 2.0;
+    }
+
+    onRunBacktest({
+      ticker,
+      strategy,
+      params,
+      initial_capital: Number(initialCapital),
+      commission_pct: Number(commission) / 100,
+      slippage_pct: Number(slippage) / 100,
+      period: '1y',
+      interval: '1d',
+    });
+  };
+
   return (
     <div className="bg-slate-900 border border-slate-700 rounded-xl flex flex-col shadow-xl h-full">
       <div className="px-5 py-4 border-b border-slate-700 bg-slate-800/30 flex items-center space-x-2">
         <Settings2 className="w-5 h-5 text-indigo-400" />
         <h3 className="text-white font-semibold">Strategy Parameters</h3>
       </div>
-      
-      <div className="p-5 flex-1 overflow-y-auto">
-        <div className="mb-5">
-          <label className="text-xs text-slate-400 mb-1 block">Algorithm</label>
-          <select className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 appearance-none">
-            <option>Sentiment-Enhanced MACD</option>
-            <option>SMA Crossover (Fast/Slow)</option>
-            <option>RSI Momentum Builder</option>
-            <option>Bollinger Breakout</option>
-          </select>
-        </div>
 
-        <div className="mb-6">
-          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center">
-            <SlidersHorizontal className="w-3 h-3 mr-1" /> Dynamic Inputs
-          </h4>
-          <div className="grid grid-cols-2 gap-3">
-            <InputGroup label="Fast Period" defaultValue={12} />
-            <InputGroup label="Slow Period" defaultValue={26} />
-            <InputGroup label="Signal Smoothing" defaultValue={9} />
-            <InputGroup label="Sent. Threshold" defaultValue={0.25} type="number" step="0.01" />
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+        <div className="p-5 flex-1 overflow-y-auto space-y-5">
+          {/* Strategy Selection */}
+          <div>
+            <label className="text-xs text-slate-400 mb-1 block">Algorithm</label>
+            <select
+              value={strategy}
+              onChange={(e) => setStrategy(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+            >
+              <option value="MACD_CROSSOVER">MACD Crossover</option>
+              <option value="SMA_CROSSOVER">SMA Crossover (Fast/Slow)</option>
+              <option value="SENTIMENT_ENHANCED">Sentiment-Enhanced MACD</option>
+              <option value="RSI_MOMENTUM">RSI Momentum Builder</option>
+              <option value="BOLLINGER_BREAKOUT">Bollinger Breakout</option>
+            </select>
           </div>
-        </div>
 
-        <div>
-          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Simulation Settings</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <InputGroup label="Initial Capital ($)" defaultValue={10000} />
-            <InputGroup label="Commission (%)" defaultValue={0.1} step="0.01" />
-            <div className="col-span-2">
-              <InputGroup label="Slippage (%)" defaultValue={0.05} step="0.01" />
+          {/* Dynamic Strategy Inputs */}
+          <div>
+            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center">
+              <SlidersHorizontal className="w-3 h-3 mr-1" /> Dynamic Inputs
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Fast Period</label>
+                <input
+                  type="number"
+                  value={fastPeriod}
+                  onChange={(e) => setFastPeriod(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Slow Period</label>
+                <input
+                  type="number"
+                  value={slowPeriod}
+                  onChange={(e) => setSlowPeriod(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Signal Smoothing</label>
+                <input
+                  type="number"
+                  value={signalSmoothing}
+                  onChange={(e) => setSignalSmoothing(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Sent. Threshold</label>
+                <input
+                  type="number"
+                  step="0.05"
+                  value={sentThreshold}
+                  onChange={(e) => setSentThreshold(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Simulation Settings */}
+          <div>
+            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+              Simulation Settings
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Initial Capital ($)</label>
+                <input
+                  type="number"
+                  value={initialCapital}
+                  onChange={(e) => setInitialCapital(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Commission (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={commission}
+                  onChange={(e) => setCommission(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs text-slate-400 mb-1 block">Slippage (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={slippage}
+                  onChange={(e) => setSlippage(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="p-5 border-t border-slate-700 bg-slate-800/30">
-        <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors shadow-[0_0_15px_rgba(79,70,229,0.3)]">
-          <Play className="w-4 h-4 fill-current" />
-          <span>Run Backtest</span>
-        </button>
-      </div>
+        {/* Submit Button */}
+        <div className="p-5 border-t border-slate-700 bg-slate-800/30">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors shadow-[0_0_15px_rgba(79,70,229,0.3)] cursor-pointer"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Running Simulation...</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 fill-current" />
+                <span>Run Backtest ({ticker})</span>
+              </>
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
