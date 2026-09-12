@@ -27,6 +27,25 @@ MAX_RETRIES: Final[int] = 3
 BACKOFF_FACTOR: Final[float] = 1.5
 REQUEST_TIMEOUT: Final[float] = 15.0
 
+# Map base crypto symbols to human-readable names for better news search
+CRYPTO_KEYWORDS: Final[dict[str, str]] = {
+    "BTC": "Bitcoin",
+    "ETH": "Ethereum",
+    "SOL": "Solana",
+    "XRP": "Ripple",
+    "ADA": "Cardano",
+    "DOT": "Polkadot",
+    "DOGE": "Dogecoin",
+    "AVAX": "Avalanche",
+    "MATIC": "Polygon",
+    "LINK": "Chainlink",
+    "LTC": "Litecoin",
+    "UNI": "Uniswap",
+    "SHIB": "Shiba Inu",
+    "BNB": "Binance Coin",
+    "ATOM": "Cosmos",
+}
+
 
 class NewsArticle:
     """Normalized news article container."""
@@ -63,6 +82,19 @@ class NewsFetcher:
     def __init__(self, settings: Settings) -> None:
         self._newsapi_key = settings.newsapi_key
         self._alpha_vantage_key = settings.alpha_vantage_key
+
+    @staticmethod
+    def _build_search_query(ticker: str) -> str:
+        """Convert a ticker into an optimal news search query.
+
+        For crypto pairs like 'ETH/USDT', search for 'Ethereum OR ETH crypto'.
+        For stock tickers like 'AAPL', return as-is.
+        """
+        base = ticker.split("/")[0].upper() if "/" in ticker else ticker.upper()
+        crypto_name = CRYPTO_KEYWORDS.get(base)
+        if crypto_name:
+            return f"{crypto_name} OR {base} crypto"
+        return ticker
 
     async def fetch(self, ticker: str, lookback_days: int = DEFAULT_LOOKBACK_DAYS) -> list[NewsArticle]:
         """Fetch news articles for a ticker from all configured sources.
@@ -119,8 +151,9 @@ class NewsFetcher:
     ) -> list[NewsArticle]:
         """Fetch from NewsAPI with retry + exponential backoff."""
         from_date = (datetime.now(tz=timezone.utc) - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
+        query = self._build_search_query(ticker)
         params = {
-            "q": ticker,
+            "q": query,
             "from": from_date,
             "sortBy": "publishedAt",
             "language": "en",
@@ -155,9 +188,12 @@ class NewsFetcher:
         self, client: httpx.AsyncClient, ticker: str
     ) -> list[NewsArticle]:
         """Fetch from Alpha Vantage News Sentiment endpoint."""
+        # AV expects tickers like 'AAPL' or 'CRYPTO:BTC'
+        base = ticker.split("/")[0].upper() if "/" in ticker else ticker.upper()
+        av_ticker = f"CRYPTO:{base}" if base in CRYPTO_KEYWORDS else ticker
         params = {
             "function": "NEWS_SENTIMENT",
-            "tickers": ticker,
+            "tickers": av_ticker,
             "limit": 50,
             "apikey": self._alpha_vantage_key,
         }

@@ -64,7 +64,7 @@ def _compound_to_signal(score: float) -> str:
 )
 async def analyze_ticker(
     request: Request,
-    ticker: Annotated[str, Path(min_length=1, max_length=10, description="Stock ticker symbol")],
+    ticker: Annotated[str, Path(min_length=1, max_length=20, description="Stock or crypto ticker symbol")],
     lookback_days: Annotated[int, Query(ge=1, le=30, description="Days to look back")] = 7,
     settings: Settings = Depends(get_settings),
 ) -> TickerSentimentResponse:
@@ -77,14 +77,48 @@ async def analyze_ticker(
     articles = await fetcher.fetch(ticker, lookback_days=lookback_days)
 
     if not articles:
-        raise HTTPException(status_code=404, detail=f"No news articles found for {ticker}.")
+        # No news is not an error — return neutral sentiment
+        logger.info("No articles found for %s — returning neutral sentiment.", ticker)
+        return TickerSentimentResponse(
+            status="ok",
+            data=TickerSentimentData(
+                ticker=ticker,
+                current_score=0.0,
+                signal="Neutral",
+                headline_scores=[],
+                rolling_sentiment=[],
+                total_articles=0,
+            ),
+            meta=ResponseMeta(
+                timestamp=datetime.now(tz=timezone.utc),
+                ticker=ticker,
+                cached_items=0,
+            ),
+        )
 
     # 2. Preprocess
     raw_headlines = [a.title for a in articles]
     cleaned = preprocess_headlines(raw_headlines, ticker=None)  # Don't filter by ticker — already fetched for it
 
     if not cleaned:
-        raise HTTPException(status_code=404, detail=f"No valid headlines after preprocessing for {ticker}.")
+        # All headlines filtered out — return neutral sentiment
+        logger.info("No valid headlines after preprocessing for %s — returning neutral sentiment.", ticker)
+        return TickerSentimentResponse(
+            status="ok",
+            data=TickerSentimentData(
+                ticker=ticker,
+                current_score=0.0,
+                signal="Neutral",
+                headline_scores=[],
+                rolling_sentiment=[],
+                total_articles=0,
+            ),
+            meta=ResponseMeta(
+                timestamp=datetime.now(tz=timezone.utc),
+                ticker=ticker,
+                cached_items=0,
+            ),
+        )
 
     # 3. Score with FinBERT
     scores = analyzer.predict(cleaned)
