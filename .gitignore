@@ -7,3 +7,5 @@ dist/
 ml_artifacts/
 *.pyc
 .ruff_cache/
+cloudflared.exe
+ngrok.exe
